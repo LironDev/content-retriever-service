@@ -16,15 +16,14 @@ npm run start:dev
 
 ### Submit URLs for fetching
 ```bash
-POST /fetch
-{
-  "urls": ["https://example.com", "www.google.com"]
-}
+curl --location 'http://localhost:3000/fetch' \
+--header 'Content-Type: application/json' \
+--data '{"urls": ["https://www.google.com"]}'
 ```
 
 ### Get cached content
 ```bash
-GET /fetch?url=https://example.com
+curl --location 'http://localhost:3000/fetch?url=https%3A%2F%2Fwww.google.com'
 ```
 
 ## Environment
