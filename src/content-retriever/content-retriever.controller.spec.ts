@@ -16,4 +16,8 @@ describe('ContentRetrieverController', () => {
   it('should throw BadRequestException for invalid input', async () => {
     await expect(controller.submitUrls({ urls: [] })).rejects.toThrow(BadRequestException);
   });
+
+  it('should throw BadRequestException for empty value', async () => {
+    await expect(controller.submitUrls({ urls: [""] })).rejects.toThrow(BadRequestException);
+  });
 }); 

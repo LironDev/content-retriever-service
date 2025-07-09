@@ -12,6 +12,7 @@ export class ContentRetrieverService {
   private readonly logger = new Logger(ContentRetrieverService.name);
   private readonly DEFAULT_TTL_MS = 60 * 60 * 1000; // 1h
   private readonly FETCH_TIMEOUT = 10 * 1000; // 10sec
+  private UrlCache = new Map(); // will hold {url: {expiresAt}}}
 
   constructor(
     @InjectRepository(FetchedUrl)
@@ -27,14 +28,17 @@ export class ContentRetrieverService {
       try {
         url = sanitizeUrl(url);
         // check if a fresh version of this url already exists in the cache
-        const existingEntry = await this.fetchedUrlRepository.findOne({
+        const existingEntry = this.UrlCache.get(url) || await this.fetchedUrlRepository.findOne({
           where: { originalUrl: url },
           order: { fetchedAt: 'DESC' }, // get recent
         });
 
-        if (existingEntry && existingEntry?.expiresAt > new Date()) { // db has fresh record
+        if (existingEntry && existingEntry?.expiresAt > new Date()) { // cache/db has fresh record
+          if (!this.UrlCache.has(url)) this.UrlCache.set(url, {expiresAt: existingEntry.expiresAt}); // incase url only on db and its frash, add it to cache
           this.logger.log(`Serving ${url} from fresh cache. No re-fetch needed.`);
           return;
+        } else {
+          this.UrlCache.delete(url); // remove from cache if not fresh
         }
 
         // fetch content
@@ -82,9 +86,10 @@ export class ContentRetrieverService {
           content: contentForDb,
           contentEncoding: contentEncoding,
           fetchedAt: new Date(),
-          expiresAt: expiresAt,
+          expiresAt,
         });
 
+        this.UrlCache.set(url, {expiresAt});
         await this.fetchedUrlRepository.save(fetchedEntry);
         this.logger.log(`Successfully fetched and stored content for: ${url}`);
 
@@ -94,14 +99,16 @@ export class ContentRetrieverService {
         const httpStatus = error.response ? error.response.status : null;
         const errorMessage = error.message || 'Unknown error during fetch';
 
+        const expiresAt = new Date(Date.now() + this.DEFAULT_TTL_MS / 4); // shorter ttl for error entries
         // save an error entry to the database
         const errorEntry = this.fetchedUrlRepository.create({
           originalUrl: url,
           httpStatus,
           error: errorMessage,
           fetchedAt: new Date(),
-          expiresAt: new Date(Date.now() + this.DEFAULT_TTL_MS / 4), // shorter ttl for error entries
+          expiresAt
         });
+        this.UrlCache.set(errorEntry.originalUrl, {expiresAt});
         await this.fetchedUrlRepository.save(errorEntry);
       }
     });
