@@ -13,12 +13,6 @@ export class ContentRetrieverController {
   @Post('/')
   @HttpCode(HttpStatus.ACCEPTED) // this return 202 Accepted, because the processing is async
   async submitUrls(@Body() urlsDto: UrlsDto): Promise<{ message: string }> {
-    if (!urlsDto || !urlsDto.urls || !Array.isArray(urlsDto.urls) || urlsDto.urls.length === 0) {
-      this.logger.warn('Received POST request with invalid or empty URLs array.');
-      // 400 Bad Request for bad input
-      throw new BadRequestException('Invalid input: "urls" array is required and cannot be empty.');
-    }
-
     this.logger.log(`Received ${urlsDto.urls.length} URLs to fetch`);
     return this.contentRetrieverService.submitUrlsForFetching(urlsDto.urls);
   }
