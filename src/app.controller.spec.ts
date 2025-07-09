@@ -13,4 +13,14 @@ describe('AppController', () => {
 
     appController = app.get<AppController>(AppController);
   });
+
+  it('should return "pong" for ping', () => {
+    expect(appController.ping()).toBe('pong');
+  });
+
+  it('should return status object', () => {
+    const result = appController.status();
+    expect(result).toHaveProperty('status');
+    expect(result.status).toBe('ok');
+  });
 });
