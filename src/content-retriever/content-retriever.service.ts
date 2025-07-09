@@ -22,6 +22,7 @@ export class ContentRetrieverService {
   // submit urls for fetching
   async submitUrlsForFetching(urls: string[]): Promise<{ message: string }> {
     this.logger.log(`Received request to fetch ${urls.length} URLs.`);
+    urls = [...new Set(urls)]; // remove duplicates
 
     // process each url asynchronously without blocking the main thread
     urls.forEach(async (url) => {

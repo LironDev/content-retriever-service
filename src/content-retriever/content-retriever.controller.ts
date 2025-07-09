@@ -14,6 +14,10 @@ export class ContentRetrieverController {
   @HttpCode(HttpStatus.ACCEPTED) // this return 202 Accepted, because the processing is async
   async submitUrls(@Body() urlsDto: UrlsDto): Promise<{ message: string }> {
     this.logger.log(`Received ${urlsDto.urls.length} URLs to fetch`);
+    if (urlsDto.urls.length > 10) {
+      throw new BadRequestException('Only 10 URLs allowed per request');
+    }
+
     return this.contentRetrieverService.submitUrlsForFetching(urlsDto.urls);
   }
 
