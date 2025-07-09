@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  content-retriever:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_PATH=/app/data/db.sqlite
+    volumes:
+      - ./data:/app/data
+      - ./src:/app/src  # hot reload
+    command: npm run start:dev
+    restart: unless-stopped
